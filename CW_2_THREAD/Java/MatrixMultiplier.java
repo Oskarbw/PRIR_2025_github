@@ -28,7 +28,6 @@ public class MatrixMultiplier implements Runnable {
 
     private void multiply() {
         double[][] resultValues = result.getValues();
-
         for (int i = startRow; i <= endRow; i++) {
             for (int j = (i == startRow ? startColumn : 0); j < (i == endRow ? endColumn : result.getColumns()); j++) {
                 double sum = 0;
