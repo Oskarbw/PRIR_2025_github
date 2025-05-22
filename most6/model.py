@@ -1,52 +1,57 @@
+import math
+
 class SimpleBridge:
-    """Bardzo uproszczony model mostu."""
-    
-    def __init__(self, length=20.0, num_segments=5, sections=None):
+    def __init__(self, length=20.0, num_segments=5, members=None):
         self.length = length
         self.num_segments = num_segments
         
-        # Przekroje elementów w m²
-        if sections is None:
-            self.sections = [0.01, 0.01, 0.008, 0.006, 0.007]
+        # średnice elementów w mm
+        if members is None:
+            self.members.top_chord = 150
+            self.members.bottom_chord = 200
+            self.members.posts = 100
+            self.members.diagonals = 75
         else:
-            self.sections = sections
+            self.members = members
         
         # Oceny
         self.mass = None
         self.strength = None
-        self.fitness = None
     
     def calculate_mass(self):
-        """Oblicza przybliżoną masę mostu."""
         # Gęstość stali: 7850 kg/m³
         density = 7850
         
-        # Długości elementów
-        seg_len = self.length / self.num_segments
-        total_length = [
-            self.length * 2,                        # pasy górne
-            self.length * 2,                        # pasy dolne
-            (self.num_segments + 1) * 2,            # słupki
-            self.num_segments * 2 * 1.414 * seg_len,  # krzyżulce
-            (self.num_segments + 1) * 2             # poprzeczki
+        # Długości elementów w metrach
+        segment_length = self.length / self.num_segments
+        height = 5
+        diagonal_length = math.sqrt(segment_length**2 + height**2)
+
+        total_lengths = [
+            self.length,                                # top_chord
+            self.length,                                # bottom_chord
+            (self.num_segments + 1) * height,           # posts
+            (self.num_segments * 2) * diagonal_length,  # diagonals
         ]
         
         # Objętości i masa
-        volumes = [s * l for s, l in zip(self.sections, total_length)]
+        members_merged = [self.members.top_chord, self.members.bottom_chord, self.members.posts, self.members.diagonals]
+        volumes = [s**2 *math.pi * l for s, l in zip(members_merged, total_lengths)]
         total_mass = sum(volumes) * density
         
         return total_mass
     
     def calculate_strength(self):
-        """Oblicza przybliżoną ocenę wytrzymałości."""
         # Bardzo uproszczona ocena - im większe przekroje, tym lepsza wytrzymałość,
-        # ale z malejącymi zwrotami
-        strength = sum(section ** 0.5 for section in self.sections)
-        
+        strength = 1000 * self.num_segments * (self.members.top_chord/100 
+                                               * self.members.top_chord/100 
+                                               * self.members.top_chord/50 
+                                               * self.members.top_chord/40) / (self.length/10)**2
         return strength
     
+    # ta funkcja powinna być w genetic.py
+    """ 
     def evaluate(self):
-        """Ocenia most."""
         self.mass = self.calculate_mass()
         self.strength = self.calculate_strength()
         
@@ -54,9 +59,10 @@ class SimpleBridge:
         self.fitness = self.strength / (self.mass ** 0.5)
         
         return self.fitness
+    """
     
     def clone(self):
-        """Tworzy kopię mostu."""
+        # Tworzy kopię mostu
         return SimpleBridge(
             length=self.length,
             num_segments=self.num_segments,

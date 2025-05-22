@@ -9,12 +9,13 @@ from gui import OptimizationApp
 from visual import visualize_bridge
 
 def parse_args():
-    """Parsuje argumenty wiersza poleceń."""
+    # Parsuje argumenty wiersza poleceń.
     parser = argparse.ArgumentParser(description='Uproszczona optymalizacja mostu')
     
     parser.add_argument('--gui', action='store_true', help='Uruchom interfejs graficzny')
     parser.add_argument('--length', type=float, default=20.0, help='Długość mostu w metrach')
     parser.add_argument('--segments', type=int, default=5, help='Liczba segmentów')
+    parser.add_argument('--strength', type=double, default=3000, help='Wymagana wytrzymalosc w kg')
     parser.add_argument('--population', type=int, default=20, help='Wielkość populacji')
     parser.add_argument('--generations', type=int, default=20, help='Liczba generacji')
     parser.add_argument('--mutation', type=float, default=0.1, help='Współczynnik mutacji')
@@ -24,7 +25,7 @@ def parse_args():
     return parser.parse_args()
 
 def run_optimization(args):
-    """Uruchamia optymalizację z linii poleceń."""
+    # Uruchamia optymalizację z linii poleceń.
     print(f"Rozpoczynam optymalizację mostu o długości {args.length}m z {args.segments} segmentami")
     
     # Utwórz szablon mostu
