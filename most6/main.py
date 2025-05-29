@@ -2,24 +2,24 @@ import argparse
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import constants
 
-from model import SimpleBridge
-from genetic import GeneticOptimiser
+from model import Bridge
+from genetic import GeneticOptimizer
 from gui import OptimizationApp
 from visual import visualize_bridge
 
 def parse_args():
-    # Parsuje argumenty wiersza poleceń.
     parser = argparse.ArgumentParser(description='Uproszczona optymalizacja mostu')
     
     parser.add_argument('--gui', action='store_true', help='Uruchom interfejs graficzny')
-    parser.add_argument('--length', type=float, default=20.0, help='Długość mostu w metrach')
-    parser.add_argument('--segments', type=int, default=5, help='Liczba segmentów')
-    parser.add_argument('--strength', type=float, default=3000, help='Wymagana wytrzymalosc w kg')
-    parser.add_argument('--population', type=int, default=20, help='Wielkość populacji')
-    parser.add_argument('--generations', type=int, default=20, help='Liczba generacji')
-    parser.add_argument('--mutation', type=float, default=0.1, help='Współczynnik mutacji')
-    parser.add_argument('--processes', type=int, default=4, help='Liczba procesów równoległych')
+    parser.add_argument('--length', type=float, default=constants.DEFAULT_LENGTH, help='Długość mostu w metrach')
+    parser.add_argument('--segments', type=int, default=constants.DEFAULT_SEGMENTS, help='Liczba segmentów')
+    parser.add_argument('--strength', type=float, default=constants.DEFAULT_MIN_STRENGTH, help='Wymagana wytrzymalosc w kg')
+    parser.add_argument('--population', type=int, default=constants.DEFAULT_POPULATION_SIZE, help='Wielkość populacji')
+    parser.add_argument('--generations', type=int, default=constants.DEFAULT_GENERATIONS, help='Liczba generacji')
+    parser.add_argument('--mutation', type=float, default=constants.DEFAULT_MUTATION_RATE, help='Współczynnik mutacji')
+    parser.add_argument('--processes', type=int, default=constants.DEFAULT_PROCESSES, help='Liczba procesów równoległych')
     parser.add_argument('--plot', action='store_true', help='Wygeneruj wykres po zakończeniu')
     parser.add_argument('--visualize', action='store_true', help='Wygeneruj wizualizacje po zakończeniu')
     
@@ -30,15 +30,9 @@ def run_optimization(args):
     print(f"Rozpoczynam optymalizację mostu o długości {args.length}m z {args.segments} segmentami")
     
     # Utwórz szablon mostu
-    bridge_template = SimpleBridge(length=args.length, num_segments=args.segments)
+    bridge_template = Bridge(length=args.length, segments=args.segments)
     
-    # Utwórz optymalizator
-    # optimizer = GeneticOptimizer(
-    #     population_size=args.population,
-    #     bridge_template=bridge_template,
-    #     mutation_rate=args.mutation
-    # )
-    optimizer = GeneticOptimiser(
+    optimizer = GeneticOptimizer(
         bridge_template = bridge_template,
         min_strength=args.strength, 
         population_size=args.population,
@@ -46,9 +40,7 @@ def run_optimization(args):
         mutation_rate=args.mutation, 
         processes=args.processes # dodac wielowatkowosc
     )
-    
 
-    
     # Mierz czas
     start_time = time.time()
     

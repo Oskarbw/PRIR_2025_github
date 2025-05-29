@@ -1,9 +1,10 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from model import SimpleBridge
+import constants
+from model import Bridge
 
-class GeneticOptimiser:
+class GeneticOptimizer:
     def __init__(self,bridge_template, min_strength, population_size=20, generations=30, mutation_rate=0.1, 
                  crossover_rate=0.8,processes=1):
         self.population_size = population_size
@@ -15,28 +16,7 @@ class GeneticOptimiser:
         self.min_strength = min_strength
         
     def create_individual(self):
-
-        #Trzeba zrobic plik ze stalymi i tam wrzucic
-        TOP_CHORD_LOWER_BOUND = 20
-        TOP_CHORD_UPPER_BOUND = 300
-        BOTTOM_CHORD_LOWER_BOUND = 20
-        BOTTOM_CHORD_UPPER_BOUND = 300
-        POST_LOWER_BOUND = 20
-        POST_UPPER_BOUND = 300
-        DIAGONAL_LOWER_BOUND = 20
-        DIAGONAL_UPPER_BOUND = 300
-        
-        top_chord_diameter = random.uniform(TOP_CHORD_LOWER_BOUND, TOP_CHORD_UPPER_BOUND)
-        bottom_chord_diameter = random.uniform(BOTTOM_CHORD_LOWER_BOUND, BOTTOM_CHORD_UPPER_BOUND)
-        post_diameter = random.uniform(POST_LOWER_BOUND, POST_UPPER_BOUND)
-        diagonal_diameter = random.uniform(DIAGONAL_LOWER_BOUND, DIAGONAL_UPPER_BOUND)
-        diameters = [top_chord_diameter,
-                     bottom_chord_diameter,
-                     post_diameter,
-                     diagonal_diameter]
-        random_bridge = SimpleBridge(length=self.bridge_template.length, num_segments=self.bridge_template.num_segments, diameters=diameters)  
-
-        return random_bridge
+        return Bridge.random(length=self.bridge_template.length,segments=self.bridge_template.segments)
     
     def create_population(self):
         return [self.create_individual() for _ in range(self.population_size)]
