@@ -2,11 +2,12 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import constants
+import multiprocessing as mp
 from model import Bridge
 
 class GeneticOptimizer:
     def __init__(self,bridge_template, min_strength, population_size=20, generations=30, mutation_rate=0.1, 
-                 crossover_rate=0.8,processes=1):
+                 crossover_rate=0.8,processes=4):
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
@@ -14,6 +15,7 @@ class GeneticOptimizer:
         self.best_fitness_history = []
         self.bridge_template = bridge_template
         self.min_strength = min_strength
+        self.processes = processes
         
     def create_individual(self):
         return Bridge.random(length=self.bridge_template.length,segments=self.bridge_template.segments)
@@ -33,12 +35,16 @@ class GeneticOptimizer:
             return mass + penalty
         else:
             return mass    
+    def evaluate_population(self, population):         
+        fitness_scores = []         
+        for bridge in population:             
+            fitness = self.fitness_function(bridge)             
+            fitness_scores.append(fitness)         
+        return fitness_scores
 
-    def evaluate_population(self, population):
-        fitness_scores = []
-        for bridge in population:
-            fitness = self.fitness_function(bridge)
-            fitness_scores.append(fitness)
+    def evaluate_population_async(self, population):
+        with mp.Pool(processes=self.processes) as pool:
+            fitness_scores = pool.map(self.fitness_function, population)
         return fitness_scores
     
     def tournament_selection(self, population, fitness_scores, tournament_size=3):
