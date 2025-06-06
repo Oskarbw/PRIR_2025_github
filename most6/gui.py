@@ -4,7 +4,7 @@ import threading
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from model import SimpleBridge
+from model import Bridge
 from genetic import GeneticOptimizer
 from visual import visualize_bridge
 
@@ -125,7 +125,7 @@ class OptimizationApp:
         num_processes = self.processes_var.get()
         
         # Utwórz szablon mostu
-        bridge_template = SimpleBridge(length=length, num_segments=segments)
+        bridge_template = Bridge(length=length, num_segments=segments)
         
         # Utwórz optymalizator
         self.optimizer = GeneticOptimizer(

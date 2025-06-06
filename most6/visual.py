@@ -5,10 +5,10 @@ from matplotlib.collections import PatchCollection
 
 def visualize_bridge(bridge, filename=None, show=True, fig=None, ax=None):
     """
-    Tworzy wizualizację kratownicy mostu na podstawie modelu SimpleBridge.
+    Tworzy wizualizację kratownicy mostu na podstawie modelu Bridge.
     
     Args:
-        bridge: Obiekt SimpleBridge do wizualizacji
+        bridge: Obiekt Bridge do wizualizacji
         filename: Nazwa pliku do zapisania wizualizacji (opcjonalne)
         show: Czy wyświetlić wizualizację (domyślnie True)
         fig: Istniejąca figura matplotlib (opcjonalne)
