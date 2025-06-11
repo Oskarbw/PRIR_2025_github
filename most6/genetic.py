@@ -7,12 +7,15 @@ from model import Bridge
 from strength import Strength
 
 class GeneticOptimizer:
-    def __init__(self,bridge_template, population_size=20, generations=30, mutation_rate=0.1, 
-                 crossover_rate=0.8,processes=4):
+    def __init__(self,bridge_template,
+                 population_size=constants.DEFAULT_POPULATION_SIZE,
+                 generations=constants.DEFAULT_GENERATIONS,
+                 mutation_rate=constants.DEFAULT_MUTATION_RATE, 
+                 processes=constants.DEFAULT_PROCESSES):
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
-        self.crossover_rate = crossover_rate
+
         self.best_fitness_history = []
         self.bridge_template = bridge_template
         self.processes = processes
@@ -42,7 +45,7 @@ class GeneticOptimizer:
             fitness_scores.append(fitness)         
         return fitness_scores
 
-    def evaluate_population_async(self, population):
+    def evaluate_population_multiprocessing(self, population):
         with mp.Pool(processes=self.processes) as pool:
             fitness_scores = pool.map(self.fitness_function, population)
         return fitness_scores
@@ -66,7 +69,7 @@ class GeneticOptimizer:
         crossover_point = random.randint(1, 4)
 
         parent1_diameters = parent1.diameters.as_list()      
-        parent2_diameters = parent1.diameters.as_list()
+        parent2_diameters = parent2.diameters.as_list()
              
         child1_diameters = parent1_diameters[:crossover_point] + parent2_diameters[crossover_point:]
         child2_diameters = parent2_diameters[:crossover_point] + parent1_diameters[crossover_point:]
@@ -99,12 +102,12 @@ class GeneticOptimizer:
         population = self.create_population()
         print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.bridge_template.min_strength:.2f}")
         print(f"Parametry: populacja={self.population_size}, generacje={self.generations}")
-        print(f"Prawdopodobieństwo mutacji={self.mutation_rate}, krzyżowania={self.crossover_rate}")
+        print(f"Prawdopodobieństwo mutacji={self.mutation_rate}")
         print("-" * 60)
         
         for generation in range(self.generations):
             # Ocena populacji
-            fitness_scores = self.evaluate_population(population)
+            fitness_scores = self.evaluate_population_multiprocessing(population)
             
             # Znajdź najlepszego osobnika
             best_index = fitness_scores.index(min(fitness_scores))

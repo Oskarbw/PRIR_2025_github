@@ -1,3 +1,4 @@
+import time
 import tkinter as tk
 from tkinter import ttk
 import threading
@@ -12,7 +13,7 @@ class OptimizationApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Uproszczona optymalizacja mostu")
-        self.root.geometry("1000x720")
+        self.root.geometry("1000x800")
         
         self._create_widgets()
         
@@ -46,11 +47,11 @@ class OptimizationApp:
         ttk.Separator(input_frame, orient='horizontal').grid(row=3, column=0, columnspan=2, sticky=tk.EW, pady=10)
         
         ttk.Label(input_frame, text="Wielkość populacji:").grid(row=4, column=0, sticky=tk.W, pady=2)
-        self.pop_size_var = tk.IntVar(value=20)
-        ttk.Spinbox(input_frame, from_=10, to=100, increment=10, textvariable=self.pop_size_var, width=10).grid(row=4, column=1, sticky=tk.W, pady=2)
+        self.pop_size_var = tk.IntVar(value=200)
+        ttk.Spinbox(input_frame, from_=10, to=1000, increment=10, textvariable=self.pop_size_var, width=10).grid(row=4, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(input_frame, text="Liczba generacji:").grid(row=5, column=0, sticky=tk.W, pady=2)
-        self.generations_var = tk.IntVar(value=50)
+        self.generations_var = tk.IntVar(value=20)
         ttk.Spinbox(input_frame, from_=10, to=1000, increment=10, textvariable=self.generations_var, width=10).grid(row=5, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(input_frame, text="Wskaźnik mutacji:").grid(row=6, column=0, sticky=tk.W, pady=2)
@@ -101,13 +102,23 @@ class OptimizationApp:
         result_label_frame = ttk.LabelFrame(result_frame, text="Wyniki optymalizacji")
         result_label_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Label(result_label_frame, text="Masa:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=2)
+
+
+        ttk.Label(result_label_frame, text="Masa:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=2)
         self.mass_var = tk.StringVar(value="-")
-        ttk.Label(result_label_frame, textvariable=self.mass_var).grid(row=1, column=1, sticky=tk.W, padx=5, pady=2)
+        ttk.Label(result_label_frame, textvariable=self.mass_var).grid(row=0, column=1, sticky=tk.W, padx=5, pady=2)
         
-        ttk.Label(result_label_frame, text="Największe naprężenie w prętach:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
+        ttk.Label(result_label_frame, text="Największe naprężenie w prętach:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=2)
         self.highest_stress_display_var = tk.StringVar(value="-")
-        ttk.Label(result_label_frame, textvariable=self.highest_stress_display_var).grid(row=2, column=1, sticky=tk.W, padx=5, pady=2)
+        ttk.Label(result_label_frame, textvariable=self.highest_stress_display_var).grid(row=1, column=1, sticky=tk.W, padx=5, pady=2)
+        
+        ttk.Label(result_label_frame, text="Dopuszczalne naprężenie w stali S355:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
+        self.elastic_limit_display_var = tk.StringVar(value="-")
+        ttk.Label(result_label_frame, textvariable=self.elastic_limit_display_var).grid(row=2, column=1, sticky=tk.W, padx=5, pady=2)
+        
+        ttk.Label(result_label_frame, text="Czas wykonywania:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=2)
+        self.time_display_var = tk.StringVar(value="-")
+        ttk.Label(result_label_frame, textvariable=self.time_display_var).grid(row=3, column=1, sticky=tk.W, padx=5, pady=2)
         
         # Miejsce na etykietę z przekrojami
         self.sections_frame = ttk.LabelFrame(result_frame, text="Optymalne średnice")
@@ -119,6 +130,8 @@ class OptimizationApp:
     def start_optimization(self):
         if self.is_running:
             return
+        
+        
         
         length = self.length_var.get()
         segments = self.segments_var.get()
@@ -151,6 +164,7 @@ class OptimizationApp:
         thread.start()
     
     def _run_optimization(self):
+        self.start_time = time.time()
         try:
             def update_chart():
                 if self.is_running and self.optimizer:
@@ -178,6 +192,7 @@ class OptimizationApp:
             
         finally:
             self.is_running = False
+            self.end_time = time.time()
     
     def _update_chart(self):
         if not self.optimizer or not self.optimizer.best_fitness_history:
@@ -276,10 +291,13 @@ class OptimizationApp:
         
         mass = bridge.calculate_mass()
         highest_stress = bridge.highest_stress * 1e-6
-        
+        elapsed_time = self.end_time - self.start_time        
+
         self.mass_var.set(f"{mass:.2f} kg")
         self.highest_stress_display_var.set(f"{highest_stress:.4f} MPa")
-        
+        self.elastic_limit_display_var.set(f"{(constants.ELASTIC_LIMIT_OF_STEEL * 1e-6):.2f} MPa")        
+        self.time_display_var.set(f"{elapsed_time:.4f} s")
+
         result_text = "Optymalne średnice:\n"
         diameters_names = ["Pas górny", "Pas dolny", "Słupki", "Krzyżulce"]
         for name, value in zip(diameters_names, bridge.diameters.as_list()):
