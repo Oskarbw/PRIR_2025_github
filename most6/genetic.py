@@ -33,6 +33,7 @@ class GeneticOptimizer:
             # Kara za wytrzymałość poniżej wymaganej
             # Trzeba sprawdzic jaka wartosc kary najlepiej dziala
             penalty_multiplier = 1e-1
+
             penalty = stress_overload * penalty_multiplier
             print("KAra: " + str(penalty))
             return mass + penalty

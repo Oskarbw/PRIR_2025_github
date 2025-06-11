@@ -251,10 +251,13 @@ class Strength:
         initial_displacements_vector = self._assemble_displacements(dirichlet_neumann,initial_displacements)
         initial_forces_vector = self._assemble_forces(dirichlet_neumann, initial_forces)
 
-        K_UU = K[0:deegres_of_freedom, 0:deegres_of_freedom]
-        K_UP = K[0:deegres_of_freedom, deegres_of_freedom:deegres_of_freedom+deegres_of_constraint]
-        K_PU = K[deegres_of_freedom:deegres_of_freedom+deegres_of_constraint, 0:deegres_of_freedom]
-        K_PP = K[deegres_of_freedom:deegres_of_freedom+deegres_of_constraint, deegres_of_freedom:deegres_of_freedom+deegres_of_constraint]
+        dof = deegres_of_freedom
+        doc = deegres_of_constraint
+
+        K_UU = K[0:dof, 0:dof]
+        K_UP = K[0:dof, dof:dof+doc]
+        K_PU = K[dof:dof+doc, 0:dof]
+        K_PP = K[dof:dof+doc, dof:dof+doc]
 
         intermediate_matrix = initial_forces_vector - np.matmul(K_UP,initial_displacements_vector)
         final_displacements_unordered = np.matmul(np.linalg.inv(K_UU),intermediate_matrix)
