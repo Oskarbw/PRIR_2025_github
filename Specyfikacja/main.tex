@@ -1,0 +1,246 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[polish,english]{babel}
+
+% Page setup
+\geometry{margin=2.5cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% Code listing setup
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    commentstyle=\color{green!50!black},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red}
+}
+
+% Title page
+\title{\textbf{Specyfikacja Końcowa}}
+\title{Tytuł projektu: Implementacja (wraz z GUI) zrównoleglonego algorytmu genetycznego do dużego problemu optymalizacyjnego }
+\author{Autorzy:\\Oskar Biwejnis, Marharyta Minich}
+ 
+
+\begin{document}
+
+\maketitle
+
+ 
+
+\section{Wprowodzenie}
+
+\subsection{Cel projektu}
+ Celem projektu jest implementacja zrównoleglonego algorytmu genetycznego z graficznym interfejsem użytkownika (GUI), służącego do rozwiązywania złożonego problemu optymalizacji struktury kratownicy mostu. Algorytm ma na celu znalezienie optymalnych średnic elementów konstrukcyjnych, które minimalizują masę mostu przy zachowaniu wymaganej wytrzymałości strukturalnej.
+
+\subsection{Zakres i Główne Założenia }
+Projekt koncentruje się na:
+\begin{itemize}
+    \item Algorytm genetyczny jako główna metoda optymalizacji, pozwalająca na przeszukiwanie dużej przestrzeni rozwiązań.
+
+    \item Selekcja turniejowa wykorzystywana do wyboru najlepszych osobników w procesie ewolucji.
+
+    \item Obliczanie wytrzymałości konstrukcji realizowane przy użyciu metody elementów skończonych (MES), co pozwala dokładnie ocenić jakość każdego rozwiązania.
+
+    \item Zrównoleglenie obliczeń, co ma na celu przyspieszenie procesu ewaluacji populacji i zwiększenie wydajności algorytmu.
+
+   \item GUI, umożliwiające wizualizację kratownicy, obserwację procesu optymalizacji oraz analizę wyników.
+    
+\end{itemize}
+
+\section{Opis Funkcjonalny}
+
+\subsection{Modelowanie Konstrukcji (\texttt{model.py})}
+\begin{itemize}
+    \item Definiowanie geometrii mostu: długość, liczba segmentów, wysokość.
+    \item Obliczanie masy konstrukcji w oparciu o objętość materiału i gęstość stali (7850 kg/m³).
+    \item Szacowanie wytrzymałości przy uwzględnieniu przekrojów i geometrii.
+    \item Możliwość generowania losowych konfiguracji mostu w zadanych przedziałach.
+\end{itemize}
+
+\subsection{Algorytm Genetyczny (\texttt{genetic.py})}
+\begin{itemize}
+    \item Tworzenie początkowej populacji losowych rozwiązań.
+    \item Zrównoleglona funkcja oceny (fitness) uwzględniająca:
+    \begin{itemize}
+        \item masę konstrukcji (minimalizacja),
+        \item kary za przekroczenia granic wytrzymałości.
+    \end{itemize}
+    \item Operatory genetyczne:
+    \begin{itemize}
+        \item selekcja turniejowa,
+        \item krzyżowanie jednopunktowe,
+        \item mutacja kontrolowana (±30\%).
+    \end{itemize}
+    \item Możliwość równoległego przetwarzania obliczeń dla zwiększenia wydajności.
+\end{itemize}
+
+\subsection{Analiza Wytrzymałościowa (\texttt{strength.py})}
+\begin{itemize}
+    \item Zastosowanie metody elementów skończonych (MES):
+    \begin{itemize}
+        \item dyskretyzacja mostu na elementy prętowe,
+        \item tworzenie macierzy sztywności globalnej i rozwiązywanie układu równań.
+    \end{itemize}
+    \item Ustalanie warunków brzegowych:
+    \begin{itemize}
+        \item lewe podparcie: pełne utwierdzenie,
+        \item prawe podparcie: przegubowe (tylko pionowy kierunek).
+    \end{itemize}
+    \item Analiza naprężeń i sprawdzanie granicy plastyczności stali (355 MPa).
+\end{itemize}
+
+\subsection{Wizualizacja Konstrukcji (\texttt{visual.py})}
+\begin{itemize}
+    \item Graficzne odwzorowanie mostu w 2D z proporcjonalnymi grubościami elementów.
+    \item Kodowanie kolorami różnych typów prętów  
+\end{itemize}
+
+\subsection{Interfejs Graficzny (\texttt{gui.py})}
+\begin{itemize}
+    \item Panel wejściowy do ustawiania parametrów:
+    \begin{itemize}
+        \item geometrii mostu, ograniczeń wytrzymałościowych, ustawień algorytmu.
+    \end{itemize}
+    \item Prezentacja wyników w czasie rzeczywistym:
+    \begin{itemize}
+        \item wizualizacja najlepszej konstrukcji,
+        \item wykresy  ,
+        \item podsumowanie najważniejszych wskaźników.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Tryb Konsolowy (\texttt{main.py})}
+\begin{itemize}
+    \item Obsługa argumentów wejściowych dla pełnej konfiguracji systemu.
+\end{itemize}
+
+\section{Charakterystyka kluczowych  metod}
+
+ \subsection{\texttt{model.py} – Klasa \texttt{Bridge}}
+ \begin{itemize}
+\item {\texttt{calculate\_mass()}}
+
+Funkcja ta służy do obliczania całkowitej masy mostu. Uwzględnia gęstość stali (7850 kg/m³) oraz rzeczywiste długości geometryczne elementów, takich jak pasy, słupki i krzyżulce. Masę oblicza się na podstawie ich objętości, wynikających ze średnic zadanych dla każdego elementu.
+
+ 
+
+\item {\texttt{Bridge.random()}}
+
+Generuje losowy most z przypadkowymi średnicami elementów w przedziale 20–300 mm. Jest to kluczowa funkcja używana do inicjalizacji populacji w algorytmie genetycznym.
+
+\subsection{\texttt{genetic.py} – Klasa \texttt{GeneticOptimizer}}
+
+\item {\texttt{fitness\_function(bridge)}}
+
+Funkcja oceny osobnika. Jeśli most spełnia kryterium wytrzymałości, zwracana jest jego masa (do minimalizacji). W przeciwnym razie, dodawana jest kara proporcjonalna do przekroczenia naprężeń (100\,000 × różnica). Ta funkcja kieruje ewolucją w stronę lekkich, ale bezpiecznych konstrukcji.
+
+\item {\texttt{tournament\_selection()}}
+
+Metoda selekcji do reprodukcji – losuje trzech osobników i wybiera najlepszego (z najniższym fitness). Proces powtarza się dla całej populacji, zapewniając równowagę między eksploracją a eksploatacją.
+
+\item {\texttt{crossover(parent1, parent2)}}
+
+Jednopunktowa metoda krzyżowania – w losowym miejscu tablicy średnic wymieniane są genotypy między dwoma rodzicami, tworząc dwoje dzieci. Umożliwia mieszanie cech w celu uzyskania lepszych rozwiązań.
+
+\item{\texttt{mutate(bridge)}}
+
+Dla każdej średnicy istnieje 10\% szans na mutację, która zmienia wartość o ±30\%, mieszcząc się w granicach 20–300 mm. Mutacja wprowadza różnorodność i pomaga unikać lokalnych minimów.
+
+\item{\texttt{run()}}
+
+Główna pętla algorytmu genetycznego. Proces: inicjalizacja populacji → ocena → selekcja → krzyżowanie → mutacja → ponowna ocena. Powtarzane przez określoną liczbę generacji z zapisem najlepszego rozwiązania.
+
+\subsection{\texttt{strength.py} – Klasa \texttt{Strength} (analiza MES)}
+
+\item{\texttt{stress\_overload(diameters)}}
+
+Główna funkcja analizy wytrzymałościowej z użyciem metody elementów skończonych. Tworzy model mostu, rozwiązuje układ równań i sprawdza, czy naprężenia przekraczają granicę 355 MPa. Jeśli tak, zwraca wartość przekroczenia, w przeciwnym razie – \texttt{None}.
+
+\item{\texttt{\_define\_nodes()} i \texttt{\_define\_elements()}}
+
+Tworzą siatkę obliczeniową mostu. Węzły określają położenia punktów konstrukcji, natomiast elementy reprezentują pręty łączące te punkty. To fundament geometrii dla analizy MES.
+
+\item {\texttt{\_assemble\_stiffness\_matrix()}}
+
+Buduje globalną macierz sztywności na podstawie lokalnych macierzy poszczególnych elementów, uwzględniając ich długości i średnice. To kluczowy krok w rozwiązywaniu układu równań MES.
+
+\item {\texttt{\_element\_stiffness()}}
+
+Oblicza macierz sztywności dla pojedynczego elementu z wykorzystaniem modułu Younga (210 GPa) i pola przekroju. Uwzględnia orientację przestrzenną danego pręta.
+
+\item {\texttt{\_calculate\_highest\_stress()}}
+
+Analizuje przemieszczenia węzłów, oblicza odkształcenia i przelicza je na naprężenia zgodnie z prawem Hooke'a. Zwraca maksymalne naprężenie występujące w konstrukcji.
+
+\subsection{\texttt{gui.py} – Klasa \texttt{OptimizationApp}}
+
+\item {\texttt{start\_optimization()}}
+
+Uruchamia proces optymalizacji w osobnym wątku, pobierając parametry z interfejsu użytkownika i przekazując je do \texttt{GeneticOptimizer}.
+
+\item {\texttt{\_run\_optimization()}}
+
+Wykonywana w tle funkcja optymalizacyjna. Obsługuje cały proces, w tym aktualizację GUI i obsługę ewentualnych błędów.
+
+\item {\texttt{\_update\_chart()}}
+
+Odświeża wykres konwergencji co 500 ms, wizualizując zmiany wartości fitness w czasie. Ułatwia śledzenie postępów optymalizacji.
+
+\item{\texttt{show\_results(bridge)}}
+
+Prezentuje ostateczne wyniki: optymalne średnice, masę, wytrzymałość, a także wizualizację najlepszego mostu.
+
+\subsection{\texttt{visual.py}}
+
+\item {\texttt{visualize\_bridge(bridge)}}
+
+Funkcja odpowiedzialna za tworzenie graficznej reprezentacji mostu. Uwzględnia proporcjonalne grubości elementów, dodaje podpory, obciążenia oraz legendę. Może wyświetlać wizualizację lub eksportować ją do pliku.
+
+\subsection{\texttt{main.py}}
+
+\item {\texttt{parse\_args()}}
+
+Pozwala na uruchomienie systemu z linii poleceń, umożliwiając konfigurację parametrów optymalizacji bez użycia GUI.
+
+\item {\texttt{run\_optimization(args)}}
+
+Uruchamia proces optymalizacji na podstawie podanych argumentów, mierzy czas działania i zapisuje wyniki do plików.
+
+\section{Przepływ Danych w Systemie}
+
+\begin{enumerate}
+    \item \textbf{Inicjalizacja} – \texttt{Bridge.random()} generuje losową populację mostów.
+    \item \textbf{Ocena} – \texttt{fitness\_function()} przypisuje wartość dopasowania każdemu mostowi.
+    \item \textbf{Ewolucja} – Algorytm stosuje selekcję (\texttt{tournament\_selection()}), krzyżowanie (\texttt{crossover()}) i mutację (\texttt{mutate()}), aby utworzyć nowe pokolenia.
+    \item \textbf{Weryfikacja} – \texttt{stress\_overload()} sprawdza rzeczywistą wytrzymałość najlepszego rozwiązania.
+    \item \textbf{Prezentacja} – Wyniki są przedstawiane za pomocą \texttt{visualize\_bridge()} oraz komponentów GUI.
+\end{enumerate}
+
+\section{Zrównoleglenie obliczeń}
+
+Describe your methodology in detail. This should include:
+ 
+
+\section{Analiza wydajności}
+
+This section presents the results of your evaluation and analysis.
+ 
+
+\section{Wnioski}
+ 
+
+\end{document}
