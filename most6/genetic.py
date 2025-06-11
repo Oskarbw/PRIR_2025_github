@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import constants
 import multiprocessing as mp
 from model import Bridge
+from strength import Strength
 
 class GeneticOptimizer:
     def __init__(self,bridge_template, min_strength, population_size=20, generations=30, mutation_rate=0.1, 
@@ -16,6 +17,7 @@ class GeneticOptimizer:
         self.bridge_template = bridge_template
         self.min_strength = min_strength
         self.processes = processes
+        self.strength_calculator = Strength(bridge_template, min_strength * constants.KG_TO_NEWTON)
         
     def create_individual(self):
         return Bridge.random(length=self.bridge_template.length,segments=self.bridge_template.segments)
@@ -24,17 +26,19 @@ class GeneticOptimizer:
         return [self.create_individual() for _ in range(self.population_size)]
     
     def fitness_function(self, bridge):
-        strength = bridge.calculate_strength()
+        stress_overload = self.strength_calculator.stress_overload(bridge.diameters)
         mass = bridge.calculate_mass()
         
-        if strength < self.min_strength:
+        if stress_overload:
             # Kara za wytrzymałość poniżej wymaganej
             # Trzeba sprawdzic jaka wartosc kary najlepiej dziala
-            penalty_multiplier = 100000
-            penalty = (self.min_strength - strength) * penalty_multiplier
+            penalty_multiplier = 1e-1
+            penalty = stress_overload * penalty_multiplier
+            print("KAra: " + str(penalty))
             return mass + penalty
         else:
-            return mass    
+            return mass
+          
     def evaluate_population(self, population):         
         fitness_scores = []         
         for bridge in population:             
@@ -90,7 +94,6 @@ class GeneticOptimizer:
     def run(self):
         # Inicjalizacja populacji
         population = self.create_population()
-        
         print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.min_strength:.2f}")
         print(f"Parametry: populacja={self.population_size}, generacje={self.generations}")
         print(f"Prawdopodobieństwo mutacji={self.mutation_rate}, krzyżowania={self.crossover_rate}")

@@ -3,11 +3,14 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import constants
+from datetime import datetime
 
 from model import Bridge
 from genetic import GeneticOptimizer
 from gui import OptimizationApp
 from visual import visualize_bridge
+from strength import Strength
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Uproszczona optymalizacja mostu')
@@ -40,6 +43,15 @@ def run_optimization(args):
         mutation_rate=args.mutation, 
         processes=args.processes # dodac wielowatkowosc
     )
+    
+
+
+    # random_bridge = Bridge.random(length=args.length,segments=args.segments)
+    # strength = Strength(bridge_template, args.strength/10)
+    # strength.stress_overload(random_bridge.diameters)
+    
+
+
 
     # Mierz czas
     start_time = time.time()
@@ -88,9 +100,9 @@ def run_optimization(args):
     
     # Wygeneruj wizualizację mostu
     if args.visualize:
-        vis_filename = None
-        if args.output:
-            vis_filename = f"{args.output}_bridge.png"
+        now = datetime.now()
+        now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+        vis_filename = f"bridge_{now_str}.png"
         
         visualize_bridge(best_bridge, filename=vis_filename)
         if vis_filename:
