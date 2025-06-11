@@ -7,19 +7,16 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from model import Bridge
 from genetic import GeneticOptimizer
 from visual import visualize_bridge
+import constants
 
 class OptimizationApp:
-    """Prosta aplikacja do optymalizacji mostów."""
-    
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Uproszczona optymalizacja mostu")
-        self.root.geometry("800x600")
+        self.root.geometry("1000x720")
         
-        # Tworzenie interfejsu
         self._create_widgets()
         
-        # Stan aplikacji
         self.optimizer = None
         self.best_bridge = None
         self.is_running = False
@@ -113,9 +110,9 @@ class OptimizationApp:
         self.mass_var = tk.StringVar(value="-")
         ttk.Label(result_label_frame, textvariable=self.mass_var).grid(row=1, column=1, sticky=tk.W, padx=5, pady=2)
         
-        ttk.Label(result_label_frame, text="Wytrzymałość:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
-        self.strength_display_var = tk.StringVar(value="-")
-        ttk.Label(result_label_frame, textvariable=self.strength_display_var).grid(row=2, column=1, sticky=tk.W, padx=5, pady=2)
+        ttk.Label(result_label_frame, text="Największe naprężenie w prętach:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=2)
+        self.highest_stress_display_var = tk.StringVar(value="-")
+        ttk.Label(result_label_frame, textvariable=self.highest_stress_display_var).grid(row=2, column=1, sticky=tk.W, padx=5, pady=2)
         
         # Miejsce na etykietę z przekrojami
         self.sections_frame = ttk.LabelFrame(result_frame, text="Optymalne średnice")
@@ -128,7 +125,6 @@ class OptimizationApp:
         if self.is_running:
             return
         
-        # Pobierz parametry
         length = self.length_var.get()
         segments = self.segments_var.get()
         min_strength = self.strength_var.get()
@@ -137,10 +133,8 @@ class OptimizationApp:
         mutation_rate = self.mutation_var.get()
         num_processes = self.processes_var.get()
         
-        # Utwórz szablon mostu
         bridge_template = Bridge(length=length, segments=segments)
         
-        # Utwórz optymalizator
         self.optimizer = GeneticOptimizer(
             bridge_template=bridge_template,
             min_strength=min_strength,
@@ -164,18 +158,15 @@ class OptimizationApp:
     
     def _run_optimization(self):
         try:
-            # Uruchom funkcję aktualizacji wykresu
             def update_chart():
                 if self.is_running and self.optimizer:
                     self._update_chart()
                     self.root.after(500, update_chart)
             self.root.after(0, update_chart)
             
-            # Uruchom algorytm genetyczny
             best_bridge, _ = self.optimizer.run()
             self.best_bridge = best_bridge
             
-            # Aktualizuj GUI w głównym wątku
             def update_results():
                 self.status_var.set("Optymalizacja zakończona")
                 self._update_chart()
@@ -185,7 +176,6 @@ class OptimizationApp:
             self.root.after(0, update_results)
             
         except Exception as error:
-            # Uchwyt błędu w głównym wątku
             def show_error():
                 self.status_var.set(f"Błąd: {str(error)}")
                 self.start_button.config(state='normal')
@@ -196,7 +186,6 @@ class OptimizationApp:
             self.is_running = False
     
     def _update_chart(self):
-        """Aktualizuje wykres."""
         if not self.optimizer or not self.optimizer.best_fitness_history:
             return
         
@@ -212,30 +201,24 @@ class OptimizationApp:
         
         self.canvas.draw()
         
-        # Aktualizuj wizualizację mostu jeśli jest najlepszy most
         if self.best_bridge:
             self._update_bridge_visualization()
     
     def _update_bridge_visualization(self):
-        """Aktualizuje wizualizację mostu."""
         if not self.best_bridge:
             return
             
         try:
-            # Wyczyść poprzednią wizualizację
             self.bridge_ax.clear()
             
-            # Stwórz prostą wizualizację mostu
             self._create_simple_bridge_visualization()
             
-            # Odśwież canvas
             self.bridge_canvas.draw()
             
         except Exception as e:
             print(f"Błąd podczas aktualizacji wizualizacji: {e}")
     
     def _create_simple_bridge_visualization(self):
-        """Tworzy prostą wizualizację mostu."""
         if not self.best_bridge:
             return
             
@@ -244,33 +227,29 @@ class OptimizationApp:
         # Parametry wizualizacji
         length = bridge.length
         segments = bridge.segments
-        height = 5  # Wysokość mostu
+        height = constants.BRIDGE_HEIGHT
         segment_length = length / segments
         
-        # Węzły górne i dolne
+        # Węzły
         upper_x = [i * segment_length for i in range(segments + 1)]
         upper_y = [height] * (segments + 1)
         
         lower_x = [i * segment_length for i in range(segments + 1)]
         lower_y = [0] * (segments + 1)
         
-        # Rysuj pas górny
+        # Pręty
         self.bridge_ax.plot(upper_x, upper_y, 'b-', linewidth=bridge.diameters.top_chord/50, label='Pas górny')
         
-        # Rysuj pas dolny
         self.bridge_ax.plot(lower_x, lower_y, 'g-', linewidth=bridge.diameters.bottom_chord/50, label='Pas dolny')
         
-        # Rysuj słupki
         for i in range(segments + 1):
             self.bridge_ax.plot([upper_x[i], lower_x[i]], [upper_y[i], lower_y[i]], 
                                'k-', linewidth=bridge.diameters.post/50)
         
-        # Rysuj krzyżulce
         for i in range(segments):
-            # Lewa krzyżulec
             self.bridge_ax.plot([lower_x[i], upper_x[i+1]], [lower_y[i], upper_y[i+1]], 
                                'r-', linewidth=bridge.diameters.diagonal/50, alpha=0.7)
-            # Prawa krzyżulec
+            
             self.bridge_ax.plot([upper_x[i], lower_x[i+1]], [upper_y[i], lower_y[i+1]], 
                                'r-', linewidth=bridge.diameters.diagonal/50, alpha=0.7)
         
@@ -281,7 +260,6 @@ class OptimizationApp:
         self.bridge_ax.set_title(f'Most kratownicowy ({length}m, {segments} segmentów)')
         self.bridge_ax.grid(True, alpha=0.3)
         
-        # Dodaj podpory
         # Lewa podpora (trójkąt)
         support_x = [0, -0.5, 0.5, 0]
         support_y = [0, -0.8, -0.8, 0]
@@ -294,40 +272,35 @@ class OptimizationApp:
         self.bridge_ax.add_patch(circle)
         
         # Strzałka obciążenia
-        arrow_y = height + 1
+        arrow_y = height
         self.bridge_ax.arrow(length/2, arrow_y, 0, -0.5, head_width=0.3, head_length=0.2, 
                             fc='blue', ec='blue')
         self.bridge_ax.text(length/2, arrow_y + 0.3, 'Obciążenie', ha='center', fontsize=10)
     
     def _show_results(self, bridge):
-        """Pokazuje wyniki optymalizacji."""
         if not bridge:
             return
         
         mass = bridge.calculate_mass()
-        strength = bridge.calculate_strength()
+        highest_stress = bridge.calculate_strength()
         
         self.fitness_display_var.set(f"{mass:.6f}")
         self.mass_var.set(f"{mass:.2f} kg")
-        self.strength_display_var.set(f"{strength:.4f}")
+        self.highest_stress_display_var.set(f"{highest_stress:.4f} MPa")
         
-        # Wyświetl optymalne wartości przekrojów
         result_text = "Optymalne średnice:\n"
         diameters_names = ["Pas górny", "Pas dolny", "Słupki", "Krzyżulce"]
         for name, value in zip(diameters_names, bridge.diameters.as_list()):
             result_text += f"  {name}: {value:.2f} mm\n"
         
-        # Aktualizuj pole tekstowe z wynikami
         self.sections_text.delete(1.0, tk.END)
         self.sections_text.insert(1.0, result_text)
         
-        # Aktualizuj wizualizację mostu
         self.best_bridge = bridge
         self._update_bridge_visualization()
         
-        # Przełącz na zakładkę z wizualizacją po zakończeniu
-        self.tab_control.select(1)  # Przełącz na drugą zakładkę (indeks 1)
+        # Przełącz na zakładkę z wizualizacją 
+        self.tab_control.select(1)
     
     def run(self):
-        """Uruchamia aplikację."""
         self.root.mainloop()

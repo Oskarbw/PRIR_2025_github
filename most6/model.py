@@ -33,6 +33,7 @@ class Bridge:
         self.segments = segments
         self.diameters = diameters
         
+        self.highest_stress = None
         self.mass = None
         self.strength = None
     
