@@ -66,28 +66,35 @@ class GeneticOptimizer:
         return selected
     
     def crossover(self, parent1, parent2):
-        """Krzyżowanie dwóch mostów."""
-        child1 = parent1.clone()
-        child2 = parent2.clone()
+        # Jednopunktowe krzyżowanie
         
-
-        # Jedno punktowe krzyżowanie
         crossover_point = random.randint(1, 4)
-        
-        child1.diameters[crossover_point:] = parent2.diameters[crossover_point:]
-        child2.diameters[:crossover_point] = parent1.diameters[:crossover_point]
+
+        parent1_diameters = parent1.diameters.as_list()      
+        parent2_diameters = parent1.diameters.as_list()
+             
+        child1_diameters = parent1_diameters[:crossover_point] + parent2_diameters[crossover_point:]
+        child2_diameters = parent2_diameters[:crossover_point] + parent1_diameters[crossover_point:]
+
+        child1 = parent1.clone()
+        child2 = parent2.clone()        
+
+        child1.diameters.update_from_list(child1_diameters)
+        child2.diameters.update_from_list(child2_diameters)
         
         return child1, child2
 
     def mutate(self,bridge, mutation_rate=0.1, mutation_range=0.3):
-        """Mutacja mostu."""
+        diameters = bridge.diameters.as_list()
         for i in range(4):
             if random.random() < mutation_rate:
                 # Zmień przekrój o losową wartość w zakresie ±30%
                 factor = 1.0 + random.uniform(-mutation_range, mutation_range)
-                bridge.diameters[i] *= factor
+                diameters[i] *= factor
                 # Ogranicz minimalny i maksymalny przekrój
-                bridge.diameters[i] = max(20, min(300, bridge.diameters[i]))
+                diameters[i] = max(20, min(300, diameters[i]))
+                
+        bridge.diameters.update_from_list(diameters)
         
         return bridge
     

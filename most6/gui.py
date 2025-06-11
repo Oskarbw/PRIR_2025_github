@@ -255,24 +255,24 @@ class OptimizationApp:
         lower_y = [0] * (segments + 1)
         
         # Rysuj pas górny
-        self.bridge_ax.plot(upper_x, upper_y, 'b-', linewidth=bridge.diameters[0]/50, label='Pas górny')
+        self.bridge_ax.plot(upper_x, upper_y, 'b-', linewidth=bridge.diameters.top_chord/50, label='Pas górny')
         
         # Rysuj pas dolny
-        self.bridge_ax.plot(lower_x, lower_y, 'g-', linewidth=bridge.diameters[1]/50, label='Pas dolny')
+        self.bridge_ax.plot(lower_x, lower_y, 'g-', linewidth=bridge.diameters.bottom_chord/50, label='Pas dolny')
         
         # Rysuj słupki
         for i in range(segments + 1):
             self.bridge_ax.plot([upper_x[i], lower_x[i]], [upper_y[i], lower_y[i]], 
-                               'k-', linewidth=bridge.diameters[2]/50)
+                               'k-', linewidth=bridge.diameters.post/50)
         
         # Rysuj krzyżulce
         for i in range(segments):
             # Lewa krzyżulec
             self.bridge_ax.plot([lower_x[i], upper_x[i+1]], [lower_y[i], upper_y[i+1]], 
-                               'r-', linewidth=bridge.diameters[3]/50, alpha=0.7)
+                               'r-', linewidth=bridge.diameters.diagonal/50, alpha=0.7)
             # Prawa krzyżulec
             self.bridge_ax.plot([upper_x[i], lower_x[i+1]], [upper_y[i], lower_y[i+1]], 
-                               'r-', linewidth=bridge.diameters[3]/50, alpha=0.7)
+                               'r-', linewidth=bridge.diameters.diagonal/50, alpha=0.7)
         
         # Ustawienia osi
         self.bridge_ax.set_xlim(-1, length + 1)
@@ -314,7 +314,7 @@ class OptimizationApp:
         # Wyświetl optymalne wartości przekrojów
         result_text = "Optymalne średnice:\n"
         diameters_names = ["Pas górny", "Pas dolny", "Słupki", "Krzyżulce"]
-        for name, value in zip(diameters_names, bridge.diameters):
+        for name, value in zip(diameters_names, bridge.diameters.as_list()):
             result_text += f"  {name}: {value:.2f} mm\n"
         
         # Aktualizuj pole tekstowe z wynikami

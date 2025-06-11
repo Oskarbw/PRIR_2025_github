@@ -11,7 +11,6 @@ class Strength:
     def __init__(self, bridge_template, force):
         self.segments = bridge_template.segments
         self.bridge_length = bridge_template.length
-        self.diameters = bridge_template.diameters
         self.force = force
 
     def stress_overload(self, diameters) -> Optional[float]:
@@ -152,26 +151,21 @@ class Strength:
     def _assemble_stiffness_matrix(self, node_deegres_of_freedom_global ,elements,nodes, diameters):
         num_elements = np.size(elements,0)
         num_nodes = np.size(nodes,0)
-        top_chord_diameter = diameters[0] * constants.MM_TO_M
-        bottom_chord_diameter = diameters[1] * constants.MM_TO_M
-        post_diameter = diameters[2] * constants.MM_TO_M
-        diagonal_diameter = diameters[3] * constants.MM_TO_M
 
         K = np.zeros([num_nodes*constants.PROBLEM_DIMENSION, num_nodes*constants.PROBLEM_DIMENSION])
 
         for i in range(num_elements):
             match (i % 4):
                 case 0:
-                    diameter = post_diameter
+                    diameter = diameters.post
                 case 1:
-                    diameter = bottom_chord_diameter
+                    diameter = diameters.bottom_chord
                 case 2:
-                    diameter = diagonal_diameter
+                    diameter = diameters.diagonal
                 case 3:
-                    diameter = top_chord_diameter
+                    diameter = diameters.top_chord
 
-            section_area = (diameter/2)**2 * math.pi
-            # print("seciton area: " + str(section_area*1000000))
+            section_area = (diameter * constants.MM_TO_M / 2) ** 2 * math.pi # Pole przekroju w metrach
             element_nodes = elements[i,0:constants.NODES_PER_ELEMENT]
             k = self._element_stiffness(element_nodes,nodes,section_area)
 
