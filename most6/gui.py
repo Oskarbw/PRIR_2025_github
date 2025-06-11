@@ -6,7 +6,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from model import Bridge
 from genetic import GeneticOptimizer
-from visual import visualize_bridge
 import constants
 
 class OptimizationApp:
@@ -33,34 +32,34 @@ class OptimizationApp:
         # Parametry mostu
         ttk.Label(input_frame, text="Długość mostu [m]:").grid(row=0, column=0, sticky=tk.W, pady=2)
         self.length_var = tk.DoubleVar(value=20.0)
-        ttk.Spinbox(input_frame, from_=10.0, to=50.0, increment=5.0, textvariable=self.length_var, width=10).grid(row=0, column=1, sticky=tk.W, pady=2)
+        ttk.Spinbox(input_frame, from_=10.0, to=100.0, increment=1.0, textvariable=self.length_var, width=10).grid(row=0, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(input_frame, text="Liczba segmentów:").grid(row=1, column=0, sticky=tk.W, pady=2)
         self.segments_var = tk.IntVar(value=5)
-        ttk.Spinbox(input_frame, from_=3, to=10, increment=1, textvariable=self.segments_var, width=10).grid(row=1, column=1, sticky=tk.W, pady=2)
+        ttk.Spinbox(input_frame, from_=3, to=15, increment=1, textvariable=self.segments_var, width=10).grid(row=1, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(input_frame, text="Minimalna wytrzymałość [kg]:").grid(row=2, column=0, sticky=tk.W, pady=2)
-        self.strength_var = tk.DoubleVar(value=3000.0)
-        ttk.Spinbox(input_frame, from_=500.0, to=10000.0, increment=100.0, textvariable=self.strength_var, width=10).grid(row=2, column=1, sticky=tk.W, pady=2)
+        self.strength_var = tk.DoubleVar(value=30000.0)
+        ttk.Spinbox(input_frame, from_=100.0, to=100000.0, increment=100.0, textvariable=self.strength_var, width=10).grid(row=2, column=1, sticky=tk.W, pady=2)
         
         # Parametry algorytmu
         ttk.Separator(input_frame, orient='horizontal').grid(row=3, column=0, columnspan=2, sticky=tk.EW, pady=10)
         
         ttk.Label(input_frame, text="Wielkość populacji:").grid(row=4, column=0, sticky=tk.W, pady=2)
         self.pop_size_var = tk.IntVar(value=20)
-        ttk.Spinbox(input_frame, from_=10, to=200, increment=10, textvariable=self.pop_size_var, width=10).grid(row=4, column=1, sticky=tk.W, pady=2)
+        ttk.Spinbox(input_frame, from_=10, to=100, increment=10, textvariable=self.pop_size_var, width=10).grid(row=4, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(input_frame, text="Liczba generacji:").grid(row=5, column=0, sticky=tk.W, pady=2)
-        self.generations_var = tk.IntVar(value=20)
-        ttk.Spinbox(input_frame, from_=10, to=200, increment=5, textvariable=self.generations_var, width=10).grid(row=5, column=1, sticky=tk.W, pady=2)
+        self.generations_var = tk.IntVar(value=50)
+        ttk.Spinbox(input_frame, from_=10, to=1000, increment=10, textvariable=self.generations_var, width=10).grid(row=5, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(input_frame, text="Wskaźnik mutacji:").grid(row=6, column=0, sticky=tk.W, pady=2)
         self.mutation_var = tk.DoubleVar(value=0.1)
-        ttk.Spinbox(input_frame, from_=0.01, to=0.5, increment=0.01, textvariable=self.mutation_var, width=10).grid(row=6, column=1, sticky=tk.W, pady=2)
+        ttk.Spinbox(input_frame, from_=0.00, to=1, increment=0.05, textvariable=self.mutation_var, width=10).grid(row=6, column=1, sticky=tk.W, pady=2)
         
         ttk.Label(input_frame, text="Liczba procesów:").grid(row=7, column=0, sticky=tk.W, pady=2)
         self.processes_var = tk.IntVar(value=4)
-        ttk.Spinbox(input_frame, from_=1, to=8, increment=1, textvariable=self.processes_var, width=10).grid(row=7, column=1, sticky=tk.W, pady=2)
+        ttk.Spinbox(input_frame, from_=1, to=16, increment=1, textvariable=self.processes_var, width=10).grid(row=7, column=1, sticky=tk.W, pady=2)
         
         # Przycisk start
         self.start_button = ttk.Button(input_frame, text="Rozpocznij optymalizację", command=self.start_optimization)
@@ -102,10 +101,6 @@ class OptimizationApp:
         result_label_frame = ttk.LabelFrame(result_frame, text="Wyniki optymalizacji")
         result_label_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Label(result_label_frame, text="Fitness:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=2)
-        self.fitness_display_var = tk.StringVar(value="-")
-        ttk.Label(result_label_frame, textvariable=self.fitness_display_var).grid(row=0, column=1, sticky=tk.W, padx=5, pady=2)
-        
         ttk.Label(result_label_frame, text="Masa:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=2)
         self.mass_var = tk.StringVar(value="-")
         ttk.Label(result_label_frame, textvariable=self.mass_var).grid(row=1, column=1, sticky=tk.W, padx=5, pady=2)
@@ -133,18 +128,17 @@ class OptimizationApp:
         mutation_rate = self.mutation_var.get()
         num_processes = self.processes_var.get()
         
-        bridge_template = Bridge(length=length, segments=segments)
+        bridge_template = Bridge(length=length, segments=segments, min_strength=min_strength)
         
         self.optimizer = GeneticOptimizer(
             bridge_template=bridge_template,
-            min_strength=min_strength,
             population_size=pop_size,
             generations=generations,
             mutation_rate=mutation_rate,
             processes=num_processes
         )
         
-        # Uruchom optymalizację w osobnym wątku
+        # Optymalizacja w osobnym wątku
         self.is_running = True
         self.status_var.set("Trwa optymalizacja...")
         self.start_button.config(state='disabled')
@@ -164,7 +158,7 @@ class OptimizationApp:
                     self.root.after(500, update_chart)
             self.root.after(0, update_chart)
             
-            best_bridge, _ = self.optimizer.run()
+            best_bridge = self.optimizer.run()
             self.best_bridge = best_bridge
             
             def update_results():
@@ -224,7 +218,6 @@ class OptimizationApp:
             
         bridge = self.best_bridge
         
-        # Parametry wizualizacji
         length = bridge.length
         segments = bridge.segments
         height = constants.BRIDGE_HEIGHT
@@ -265,13 +258,13 @@ class OptimizationApp:
         support_y = [0, -0.8, -0.8, 0]
         self.bridge_ax.plot(support_x, support_y, 'k-', linewidth=2)
         
-        # Prawa podpora (prostokąt z kółkiem)
+        # Prawa podpora (prostokąt )
         self.bridge_ax.plot([length-0.3, length+0.3, length+0.3, length-0.3, length-0.3], 
                            [0, 0, -0.5, -0.5, 0], 'k-', linewidth=2)
         circle = plt.Circle((length, -0.3), 0.15, color='gray', alpha=0.7)
         self.bridge_ax.add_patch(circle)
         
-        # Strzałka obciążenia
+        # Strzałka siły obciążenia
         arrow_y = height
         self.bridge_ax.arrow(length/2, arrow_y, 0, -0.5, head_width=0.3, head_length=0.2, 
                             fc='blue', ec='blue')
@@ -282,9 +275,8 @@ class OptimizationApp:
             return
         
         mass = bridge.calculate_mass()
-        highest_stress = bridge.calculate_strength()
+        highest_stress = bridge.highest_stress * 1e-6
         
-        self.fitness_display_var.set(f"{mass:.6f}")
         self.mass_var.set(f"{mass:.2f} kg")
         self.highest_stress_display_var.set(f"{highest_stress:.4f} MPa")
         

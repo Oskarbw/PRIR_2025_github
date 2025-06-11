@@ -3,6 +3,7 @@ import random
 from dataclasses import dataclass
 
 import constants
+from strength import Strength
 
 @dataclass
 class Diameters: # średnice w mlimetrach
@@ -26,16 +27,19 @@ class Diameters: # średnice w mlimetrach
     def update_from_list(self, values) -> None:
         self.top_chord, self.bottom_chord, self.post, self.diagonal = values
 
-
 class Bridge:
-    def __init__(self, length=20.0, segments=5, diameters=Diameters()):
+    def __init__(self,
+                 length=constants.DEFAULT_LENGTH,
+                 segments=constants.DEFAULT_SEGMENTS,
+                 min_strength=constants.DEFAULT_MIN_STRENGTH,
+                 diameters=Diameters()):
         self.length = length
         self.segments = segments
+        self.min_strength = min_strength
         self.diameters = diameters
         
         self.highest_stress = None
-        self.mass = None
-        self.strength = None
+        self.strength = Strength(self)
     
     def calculate_mass(self):
         density = constants.STEEL_DENSITY
@@ -51,30 +55,28 @@ class Bridge:
             (self.segments * 2) * diagonal_length,  # diagonals
         ]
         
-        volumes = [(s/1000)**2 *math.pi * l for s, l in zip(self.diameters.as_list(), total_lengths)]
-        total_mass = sum(volumes) * density
+        volumes = [(s * constants.MM_TO_M)**2 *math.pi * l for s, l in zip(self.diameters.as_list(), total_lengths)]
+        mass = sum(volumes) * density  
         
-        return total_mass
+        return mass
     
-    def calculate_strength(self):
-        # Bardzo uproszczona ocena - im większe przekroje, tym lepsza wytrzymałość,
-        strength = 1000 * self.segments * (self.diameters.as_list()[0]/100 
-                                               * self.diameters.as_list()[1]/100 
-                                               * self.diameters.as_list()[2]/50 
-                                               * self.diameters.as_list()[3]/40) / (self.length/10)**2
+    def calculate_highest_stress(self):
+        highest_stress = self.strength.highest_stress(self.diameters)
+        self.highest_stress = highest_stress
         
-        return strength
+        return highest_stress
     
     def clone(self):
         
         return Bridge(
             length=self.length,
             segments=self.segments,
+            min_strength=self.min_strength,
             diameters=Diameters(self.diameters.as_list())
         )
     
     @classmethod
-    def random(cls, length, segments):
+    def random(cls, bridge_template):
         top_chord_diameter = random.uniform(constants.TOP_CHORD_LOWER_BOUND, constants.TOP_CHORD_UPPER_BOUND)
         bottom_chord_diameter = random.uniform(constants.BOTTOM_CHORD_LOWER_BOUND, constants.BOTTOM_CHORD_UPPER_BOUND)
         post_diameter = random.uniform(constants.POST_LOWER_BOUND, constants.POST_UPPER_BOUND)
@@ -85,6 +87,8 @@ class Bridge:
                      post_diameter,
                      diagonal_diameter])
         
-        random_bridge = Bridge(length=length, segments=segments, diameters=diameters)  
-
+        random_bridge = Bridge(length=bridge_template.length,
+                                segments=bridge_template.segments,
+                                min_strength=bridge_template.min_strength,
+                                diameters=diameters)
         return random_bridge

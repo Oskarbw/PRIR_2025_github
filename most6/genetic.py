@@ -7,7 +7,7 @@ from model import Bridge
 from strength import Strength
 
 class GeneticOptimizer:
-    def __init__(self,bridge_template, min_strength, population_size=20, generations=30, mutation_rate=0.1, 
+    def __init__(self,bridge_template, population_size=20, generations=30, mutation_rate=0.1, 
                  crossover_rate=0.8,processes=4):
         self.population_size = population_size
         self.generations = generations
@@ -15,27 +15,22 @@ class GeneticOptimizer:
         self.crossover_rate = crossover_rate
         self.best_fitness_history = []
         self.bridge_template = bridge_template
-        self.min_strength = min_strength
         self.processes = processes
-        self.strength_calculator = Strength(bridge_template, min_strength * constants.KG_TO_NEWTON)
         
     def create_individual(self):
-        return Bridge.random(length=self.bridge_template.length,segments=self.bridge_template.segments)
+        return Bridge.random(self.bridge_template)
     
     def create_population(self):
         return [self.create_individual() for _ in range(self.population_size)]
     
     def fitness_function(self, bridge):
-        stress_overload = self.strength_calculator.stress_overload(bridge.diameters)
+        highest_stress = bridge.calculate_highest_stress()
         mass = bridge.calculate_mass()
         
-        if stress_overload:
+        if highest_stress > constants.ELASTIC_LIMIT_OF_STEEL:
             # Kara za wytrzymałość poniżej wymaganej
-            # Trzeba sprawdzic jaka wartosc kary najlepiej dziala
-            penalty_multiplier = 1e-1
-
-            penalty = stress_overload * penalty_multiplier
-            print("KAra: " + str(penalty))
+            penalty_multiplier = constants.PENALTY_MULTIPLIER
+            penalty = (highest_stress - constants.ELASTIC_LIMIT_OF_STEEL) * penalty_multiplier
             return mass + penalty
         else:
             return mass
@@ -102,7 +97,7 @@ class GeneticOptimizer:
     def run(self):
         # Inicjalizacja populacji
         population = self.create_population()
-        print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.min_strength:.2f}")
+        print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.bridge_template.min_strength:.2f}")
         print(f"Parametry: populacja={self.population_size}, generacje={self.generations}")
         print(f"Prawdopodobieństwo mutacji={self.mutation_rate}, krzyżowania={self.crossover_rate}")
         print("-" * 60)
@@ -152,7 +147,7 @@ class GeneticOptimizer:
         print(f"Najlepszy osobnik: {best_index}, {best_individual}")
         print(f"Minimalna wartość funkcji: {best_value}")
         
-        return best_individual, best_value
+        return best_individual
     
     def plot_convergence(self):
         """Wykres zbieżności algorytmu"""

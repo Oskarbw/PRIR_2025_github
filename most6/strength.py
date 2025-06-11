@@ -8,12 +8,12 @@ import constants
 class Strength:
     # Analiza wytrzymałości mostu za pomocą Metody Elementów Skończonych
 
-    def __init__(self, bridge_template, force):
+    def __init__(self, bridge_template):
         self.segments = bridge_template.segments
         self.bridge_length = bridge_template.length
-        self.force = force
+        self.force = bridge_template.min_strength * constants.KG_TO_NEWTON
 
-    def stress_overload(self, diameters) -> Optional[float]:
+    def highest_stress(self, diameters) -> Optional[float]:
         (nodes,
         elements,
         dirichlet_neumann,
@@ -37,9 +37,7 @@ class Strength:
 
         highest_stress = self._calculate_highest_stress(final_displacements, elements, nodes)
 
-        stress_overload = self._calculate_stress_overload(highest_stress)
-
-        return stress_overload
+        return highest_stress
 
     def _define_bridge_structure(self, length, height, segments):
         nodes = self._define_nodes(length, height,segments)
@@ -290,11 +288,3 @@ class Strength:
                 highest_stress = element_stress
 
         return highest_stress
-
-    def _calculate_stress_overload(self, highest_stress) -> Optional[float]:
-        if highest_stress > constants.ELASTIC_LIMIT_OF_STEEL:
-            stress_overload = highest_stress - constants.ELASTIC_LIMIT_OF_STEEL
-        else:
-            stress_overload = None
-
-        return stress_overload
