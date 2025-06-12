@@ -1,13 +1,22 @@
 import argparse
 import time
 import matplotlib.pyplot as plt
-import constants
 
+import constants
 from model import Bridge
 from genetic import GeneticOptimizer
 from gui import OptimizationApp
 
-def parse_args():
+def main():
+    args = _parse_args()
+
+    if args.gui:
+        app = OptimizationApp()
+        app.run()
+    else:
+        _run_optimization(args)
+
+def _parse_args():
     parser = argparse.ArgumentParser(description='Uproszczona optymalizacja mostu')
 
     parser.add_argument('--gui', action='store_true', help='Uruchom interfejs graficzny')
@@ -22,9 +31,7 @@ def parse_args():
 
     return parser.parse_args()
 
-def run_optimization(args):
-    # Optymalizacja z wiersza poleceń
-    
+def _run_optimization(args):
     print(f"Rozpoczynam optymalizację mostu o długości {args.len}m z {args.seg} segmentami")
 
     bridge_template = Bridge(length=args.len, segments=args.seg, min_strength=args.str)
@@ -34,7 +41,7 @@ def run_optimization(args):
         population_size=args.pop,
         generations=args.gen,
         mutation_rate=args.mut,
-        processes=args.proc # dodac wielowatkowosc
+        processes=args.proc
     )
 
     start_time = time.time()
@@ -46,8 +53,8 @@ def run_optimization(args):
 
     print("\nWyniki optymalizacji:")
     print(f"Masa: {best_bridge.calculate_mass():.2f} kg")
-    print(f"Największe naprężenie w prętach: {(best_bridge.highest_stress * 1e-6):.4f} MPa")
-    print(f"Dopuszczalne naprężenie stali S355: {(constants.ELASTIC_LIMIT_OF_STEEL * 1e-6):.2f} MPa")
+    print(f"Największe naprężenie w prętach: {(best_bridge.highest_stress / constants.MEGA):.4f} MPa")
+    print(f"Dopuszczalne naprężenie stali S355: {(constants.ELASTIC_LIMIT_OF_STEEL / constants.MEGA):.2f} MPa")
 
     diameters_names = ["Pas górny", "Pas dolny", "Słupki", "Krzyżulce"]
     print("\nOptymalne średnice:")
@@ -71,15 +78,6 @@ def run_optimization(args):
         plt.savefig(plot_filename)
         print(f"\nWykres zapisany do pliku '{plot_filename}'")
         plt.close()
-
-def main():
-    args = parse_args()
-
-    if args.gui:
-        app = OptimizationApp()
-        app.run()
-    else:
-        run_optimization(args)
 
 if __name__ == "__main__":
     main()
