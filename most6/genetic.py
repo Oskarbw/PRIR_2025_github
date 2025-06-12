@@ -18,6 +18,54 @@ class GeneticOptimizer:
         self.bridge_template = bridge_template
         self.processes = processes
 
+    def run(self):
+        population = self._create_population()
+        print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.bridge_template.min_strength:.2f}")
+        print(f"Parametry: populacja={self.population_size}, generacje={self.generations}")
+        print(f"Prawdopodobieństwo mutacji={self.mutation_rate}")
+        print("------------------------------------------------")
+
+        for generation in range(self.generations):
+            fitness_scores = self._evaluate_population_multiprocessing(population)
+
+            best_index = fitness_scores.index(min(fitness_scores))
+            best_individual = population[best_index]
+            best_value = min(fitness_scores)
+
+            self.best_fitness_history.append(best_value)
+
+            if generation % constants.GENERATION_OUTPUT_STEP == 0:
+                print(f"Generacja {generation:3d}")
+                print(f"Najlepszy osobnik: ({best_index})")
+                print(f"Wartość funkcji: {best_value:.6f}")
+
+            selected_population = self._tournament_selection(population, fitness_scores)
+
+            new_population = []
+            for i in range(0, self.population_size, constants.CROSSOVER_SIZE):
+                parent1 = selected_population[i]
+                parent2 = selected_population[(i + 1) % self.population_size]
+
+                child1, child2 = self._crossover(parent1, parent2)
+                child1 = self._mutate(child1)
+                child2 = self._mutate(child2)
+
+                new_population.extend([child1, child2])
+
+            population = new_population
+
+        fitness_scores = self._evaluate_population(population)
+        best_index = fitness_scores.index(min(fitness_scores))
+        best_individual = population[best_index]
+        best_value = min(fitness_scores)
+
+        print("---------------")
+        print(f"WYNIK KOŃCOWY:")
+        print(f"Najlepszy osobnik: {best_index}, {best_individual}")
+        print(f"Minimalna wartość funkcji: {best_value}")
+
+        return best_individual
+
     def _create_individual(self):
         return Bridge.random(self.bridge_template)
 
@@ -90,51 +138,3 @@ class GeneticOptimizer:
         bridge.diameters.update_from_list(diameters)
 
         return bridge
-
-    def run(self):
-        population = self._create_population()
-        print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.bridge_template.min_strength:.2f}")
-        print(f"Parametry: populacja={self.population_size}, generacje={self.generations}")
-        print(f"Prawdopodobieństwo mutacji={self.mutation_rate}")
-        print("------------------------------------------------")
-
-        for generation in range(self.generations):
-            fitness_scores = self._evaluate_population_multiprocessing(population)
-
-            best_index = fitness_scores.index(min(fitness_scores))
-            best_individual = population[best_index]
-            best_value = min(fitness_scores)
-
-            self.best_fitness_history.append(best_value)
-
-            if generation % constants.GENERATION_OUTPUT_STEP == 0:
-                print(f"Generacja {generation:3d}")
-                print(f"Najlepszy osobnik: ({best_index})")
-                print(f"Wartość funkcji: {best_value:.6f}")
-
-            selected_population = self._tournament_selection(population, fitness_scores)
-
-            new_population = []
-            for i in range(0, self.population_size, constants.CROSSOVER_SIZE):
-                parent1 = selected_population[i]
-                parent2 = selected_population[(i + 1) % self.population_size]
-
-                child1, child2 = self._crossover(parent1, parent2)
-                child1 = self._mutate(child1)
-                child2 = self._mutate(child2)
-
-                new_population.extend([child1, child2])
-
-            population = new_population
-
-        fitness_scores = self._evaluate_population(population)
-        best_index = fitness_scores.index(min(fitness_scores))
-        best_individual = population[best_index]
-        best_value = min(fitness_scores)
-
-        print("---------------")
-        print(f"WYNIK KOŃCOWY:")
-        print(f"Najlepszy osobnik: {best_index}, {best_individual}")
-        print(f"Minimalna wartość funkcji: {best_value}")
-
-        return best_individual

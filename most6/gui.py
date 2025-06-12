@@ -21,6 +21,9 @@ class OptimizationApp:
         self.best_bridge = None
         self.is_running = False
 
+    def run(self):
+        self.root.mainloop()
+
     def _create_widgets(self):
         frame = ttk.Frame(self.root, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
@@ -58,7 +61,7 @@ class OptimizationApp:
         self.processes_var = tk.IntVar(value=4)
         ttk.Spinbox(input_frame, from_=1, to=16, increment=1, textvariable=self.processes_var, width=10).grid(row=7, column=1, sticky=tk.W, pady=2)
 
-        self.start_button = ttk.Button(input_frame, text="Rozpocznij optymalizację", command=self.start_optimization)
+        self.start_button = ttk.Button(input_frame, text="Rozpocznij optymalizację", command=self._start_optimization)
         self.start_button.grid(row=8, column=0, columnspan=2, pady=10)
 
         result_frame = ttk.Frame(frame)
@@ -111,7 +114,7 @@ class OptimizationApp:
         self.sections_text = tk.Text(self.sections_frame, height=5, width=30)
         self.sections_text.pack(padx=5, pady=5)
 
-    def start_optimization(self):
+    def _start_optimization(self):
         if self.is_running:
             return
 
@@ -290,6 +293,3 @@ class OptimizationApp:
         self._update_bridge_visualization()
 
         self.tab_control.select(1)
-
-    def run(self):
-        self.root.mainloop()
