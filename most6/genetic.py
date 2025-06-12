@@ -4,37 +4,40 @@ import matplotlib.pyplot as plt
 import constants
 import multiprocessing as mp
 from model import Bridge
+from strength import Strength
 
 class GeneticOptimizer:
-    def __init__(self,bridge_template, min_strength, population_size=20, generations=30, mutation_rate=0.1, 
-                 crossover_rate=0.8,processes=4):
+    def __init__(self,bridge_template,
+                 population_size=constants.DEFAULT_POPULATION_SIZE,
+                 generations=constants.DEFAULT_GENERATIONS,
+                 mutation_rate=constants.DEFAULT_MUTATION_RATE, 
+                 processes=constants.DEFAULT_PROCESSES):
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
-        self.crossover_rate = crossover_rate
+
         self.best_fitness_history = []
         self.bridge_template = bridge_template
-        self.min_strength = min_strength
         self.processes = processes
         
     def create_individual(self):
-        return Bridge.random(length=self.bridge_template.length,segments=self.bridge_template.segments)
+        return Bridge.random(self.bridge_template)
     
     def create_population(self):
         return [self.create_individual() for _ in range(self.population_size)]
     
     def fitness_function(self, bridge):
-        strength = bridge.calculate_strength()
+        highest_stress = bridge.calculate_highest_stress()
         mass = bridge.calculate_mass()
         
-        if strength < self.min_strength:
+        if highest_stress > constants.ELASTIC_LIMIT_OF_STEEL:
             # Kara za wytrzymałość poniżej wymaganej
-            # Trzeba sprawdzic jaka wartosc kary najlepiej dziala
-            penalty_multiplier = 100000
-            penalty = (self.min_strength - strength) * penalty_multiplier
+            penalty_multiplier = constants.PENALTY_MULTIPLIER
+            penalty = (highest_stress - constants.ELASTIC_LIMIT_OF_STEEL) * penalty_multiplier
             return mass + penalty
         else:
-            return mass    
+            return mass
+          
     def evaluate_population(self, population):         
         fitness_scores = []         
         for bridge in population:             
@@ -42,7 +45,7 @@ class GeneticOptimizer:
             fitness_scores.append(fitness)         
         return fitness_scores
 
-    def evaluate_population_async(self, population):
+    def evaluate_population_multiprocessing(self, population):
         with mp.Pool(processes=self.processes) as pool:
             fitness_scores = pool.map(self.fitness_function, population)
         return fitness_scores
@@ -61,28 +64,35 @@ class GeneticOptimizer:
         return selected
     
     def crossover(self, parent1, parent2):
-        """Krzyżowanie dwóch mostów."""
-        child1 = parent1.clone()
-        child2 = parent2.clone()
+        # Jednopunktowe krzyżowanie
         
-
-        # Jedno punktowe krzyżowanie
         crossover_point = random.randint(1, 4)
-        
-        child1.diameters[crossover_point:] = parent2.diameters[crossover_point:]
-        child2.diameters[:crossover_point] = parent1.diameters[:crossover_point]
+
+        parent1_diameters = parent1.diameters.as_list()      
+        parent2_diameters = parent2.diameters.as_list()
+             
+        child1_diameters = parent1_diameters[:crossover_point] + parent2_diameters[crossover_point:]
+        child2_diameters = parent2_diameters[:crossover_point] + parent1_diameters[crossover_point:]
+
+        child1 = parent1.clone()
+        child2 = parent2.clone()        
+
+        child1.diameters.update_from_list(child1_diameters)
+        child2.diameters.update_from_list(child2_diameters)
         
         return child1, child2
 
     def mutate(self,bridge, mutation_rate=0.1, mutation_range=0.3):
-        """Mutacja mostu."""
+        diameters = bridge.diameters.as_list()
         for i in range(4):
             if random.random() < mutation_rate:
                 # Zmień przekrój o losową wartość w zakresie ±30%
                 factor = 1.0 + random.uniform(-mutation_range, mutation_range)
-                bridge.diameters[i] *= factor
+                diameters[i] *= factor
                 # Ogranicz minimalny i maksymalny przekrój
-                bridge.diameters[i] = max(20, min(300, bridge.diameters[i]))
+                diameters[i] = max(20, min(300, diameters[i]))
+                
+        bridge.diameters.update_from_list(diameters)
         
         return bridge
     
@@ -90,15 +100,14 @@ class GeneticOptimizer:
     def run(self):
         # Inicjalizacja populacji
         population = self.create_population()
-        
-        print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.min_strength:.2f}")
+        print(f"Algorytm genetyczny - szukanie najlżejszego mostu spełniającego warunek wytrzymałości {self.bridge_template.min_strength:.2f}")
         print(f"Parametry: populacja={self.population_size}, generacje={self.generations}")
-        print(f"Prawdopodobieństwo mutacji={self.mutation_rate}, krzyżowania={self.crossover_rate}")
+        print(f"Prawdopodobieństwo mutacji={self.mutation_rate}")
         print("-" * 60)
         
         for generation in range(self.generations):
             # Ocena populacji
-            fitness_scores = self.evaluate_population(population)
+            fitness_scores = self.evaluate_population_multiprocessing(population)
             
             # Znajdź najlepszego osobnika
             best_index = fitness_scores.index(min(fitness_scores))
@@ -141,7 +150,7 @@ class GeneticOptimizer:
         print(f"Najlepszy osobnik: {best_index}, {best_individual}")
         print(f"Minimalna wartość funkcji: {best_value}")
         
-        return best_individual, best_value
+        return best_individual
     
     def plot_convergence(self):
         """Wykres zbieżności algorytmu"""
